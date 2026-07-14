@@ -1,0 +1,14 @@
+com\example\discordclone\config\SecurityConfig.class
+com\example\discordclone\model\User.class
+com\example\discordclone\DiscordCloneApplication.class
+com\example\discordclone\controller\ChatController.class
+com\example\discordclone\model\Group.class
+com\example\discordclone\repository\UserRepository.class
+com\example\discordclone\controller\CallController.class
+com\example\discordclone\service\UserService.class
+com\example\discordclone\model\Permission.class
+com\example\discordclone\model\GroupTitle.class
+com\example\discordclone\model\Channel.class
+com\example\discordclone\service\EmailService.class
+com\example\discordclone\controller\AuthController.class
+com\example\discordclone\config\WebSocketConfig.class

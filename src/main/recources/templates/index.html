@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Clone</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body class="theme-dark" id="body-app">
+
+    <div id="auth-overlay" class="overlay">
+        <div class="auth-box">
+            <h2 id="auth-title">Create Account</h2>
+            <div class="form-group">
+                <label>Login (Username)</label>
+                <input type="text" id="reg-login" placeholder="cool_user_123">
+            </div>
+            <div class="form-group">
+                <label>Nickname</label>
+                <input type="text" id="reg-nickname" placeholder="Show Name">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="reg-email" placeholder="example@gmail.com">
+            </div>
+            <div class="form-group">
+                <label>Password (At least 8 chars, only letters/numbers)</label>
+                <input type="password" id="reg-password" placeholder="••••••••">
+            </div>
+            <button id="btn-register" class="btn-primary">
+                <span id="btn-reg-text">Register</span>
+                <div id="btn-reg-spinner" class="spinner hidden"></div>
+            </button>
+            <div id="reg-error" class="error-msg"></div>
+
+            <div id="verify-section" class="hidden">
+                <hr>
+                <h3>Email Verification</h3>
+                <p>Enter the 6-digit code sent to your email (check console logs too!):</p>
+                <div class="form-group">
+                    <input type="text" id="verify-code" placeholder="123456">
+                </div>
+                <button id="btn-verify" class="btn-primary">Verify & Enter</button>
+                <div id="verify-error" class="error-msg"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="incoming-call-overlay" class="call-overlay hidden">
+        <div class="call-box">
+            <div class="call-animation">📞</div>
+            <h2 id="call-caller-name">Incoming Call...</h2>
+            <div class="call-actions">
+                <button id="btn-call-accept" class="btn-call accept">Answer</button>
+                <button id="btn-call-reject" class="btn-call reject">Decline</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        
+        <aside class="sidebar-left">
+            <div class="brand">DiscordClone</div>
+            
+            <button id="tab-friends-btn" class="sidebar-item active">
+                <span class="icon">👥</span> Friends
+            </button>
+            
+            <div class="section-title">CHANNELS & GROUPS</div>
+            <div class="sidebar-list" id="sidebar-mix-list">
+                <div class="sidebar-item group-item" onclick="openChannel('general', 'Global Chat', 'text', 'Global Community')">
+                    <span class="icon">#</span> general
+                    <span class="tooltip">Global Chat (50 online)</span>
+                </div>
+                <div class="sidebar-item group-item" onclick="openChannel('gaming', 'Gaming Arena', 'text', 'Play together!')">
+                    <span class="icon">#</span> gaming
+                    <span class="tooltip">Gaming Arena (12 online)</span>
+                </div>
+                <div class="sidebar-item voice-item" onclick="joinVoice('Lounge', 'Voice Lounge')">
+                    <span class="icon">🔊</span> Lounge
+                    <span class="tooltip">Lounge (3 in call)</span>
+                </div>
+            </div>
+
+            <footer class="sidebar-footer">
+                <div class="profile-info">
+                    <img src="https://picsum.photos/40" alt="Avatar" id="my-avatar" class="avatar-sm">
+                    <div class="profile-meta">
+                        <div class="profile-name" id="my-name">Guest</div>
+                        <div class="profile-status">Online</div>
+                    </div>
+                </div>
+                <div class="audio-controls">
+                    <button id="btn-toggle-mic" class="footer-btn" title="Mute Mic">🎤</button>
+                    <button id="btn-toggle-sound" class="footer-btn" title="Deafen Sounds">🎧</button>
+                    <button id="btn-open-settings" class="footer-btn" title="Settings">⚙️</button>
+                </div>
+            </footer>
+        </aside>
+
+        <main class="main-content">
+            <header class="content-header">
+                <button id="btn-back" class="btn-back hidden">← Back</button>
+                <h2 id="header-title">Friends Dashboard</h2>
+                <div class="header-desc" id="header-desc">Manage direct contacts</div>
+            </header>
+
+            <div id="view-friends" class="view-panel">
+                <div class="tab-subnav">
+                    <button class="sub-tab active" onclick="switchFriendsSubTab('all')">All Friends</button>
+                    <button class="sub-tab" onclick="switchFriendsSubTab('add')">Add Friend</button>
+                    <button class="sub-tab" onclick="switchFriendsSubTab('pending')">Pending Requests</button>
+                </div>
+
+                <div id="friends-all" class="friends-list">
+                    <div class="friend-row">
+                        <img src="https://picsum.photos/30?random=1" class="avatar-sm">
+                        <div class="friend-details">
+                            <div class="friend-name">Artyom</div>
+                            <div class="friend-status">Online</div>
+                        </div>
+                        <div class="friend-actions">
+                            <button class="btn-icon" onclick="startDirectCall('Artyom')">📞</button>
+                            <button class="btn-icon" onclick="openChannel('direct-artyom', 'Artyom', 'direct', 'Direct Message')">💬</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="friends-add" class="hidden p-20">
+                    <h3>ADD FRIEND</h3>
+                    <p class="desc">Enter your friend's login (case-sensitive) to send an invite.</p>
+                    <div class="flex-row">
+                        <input type="text" id="add-friend-login" placeholder="Enter Login...">
+                        <button class="btn-primary" onclick="sendFriendRequest()">Send Invite</button>
+                    </div>
+                    <div id="add-friend-status"></div>
+                </div>
+
+                <div id="friends-pending" class="hidden friends-list">
+                    <p class="p-20 text-muted">No pending invitations.</p>
+                </div>
+            </div>
+
+            <div id="view-chat" class="view-panel hidden">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message">
+                        <img src="https://picsum.photos/35?random=2" class="avatar-sm">
+                        <div class="message-content">
+                            <div class="msg-header">
+                                <span class="sender-name">System</span>
+                                <span class="msg-time">12:00 PM</span>
+                            </div>
+                            <div class="msg-body">Welcome to your new Discord Clone workspace! Type a message below to test real-time chat.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input-field" placeholder="Message #general...">
+                    <div id="spam-warning" class="spam-warning hidden">Slow down! Title message cooldown active.</div>
+                </div>
+            </div>
+        </main>
+
+        <aside class="sidebar-right hidden" id="voice-sidebar">
+            <div class="panel-header">
+                <h3>Voice Call</h3>
+                <span class="conn-state">Connected RTC</span>
+            </div>
+            
+            <div class="participants-section" id="call-participants-list">
+                <div class="participant" data-userid="user-artyom">
+                    <img src="https://picsum.photos/45?random=5" class="avatar-md call-avatar">
+                    <div class="participant-name">Artyom</div>
+                    <div class="voice-indicator active"></div>
+                </div>
+            </div>
+
+            <div class="call-footer">
+                <button class="btn-primary btn-hangup" onclick="hangUpCall()">Disconnect</button>
+            </div>
+        </aside>
+    </div>
+
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2>User Settings</h2>
+                <button class="btn-close" onclick="closeSettings()">×</button>
+            </header>
+            <div class="modal-body">
+                <div class="settings-sidebar">
+                    <button class="settings-tab-btn active" onclick="switchSettingsTab('profile')">My Profile</button>
+                    <button class="settings-tab-btn" onclick="switchSettingsTab('audio')">Voice & Audio</button>
+                    <button class="settings-tab-btn" onclick="switchSettingsTab('appearance')">Appearance</button>
+                </div>
+                
+                <div class="settings-main">
+                    <div id="settings-tab-profile" class="settings-panel">
+                        <h3>Profile Security</h3>
+                        <div class="form-group">
+                            <label>Nickname (Once in 3 days)</label>
+                            <input type="text" id="settings-nickname" placeholder="Nickname">
+                            <button class="btn-primary inline-btn" onclick="saveNickname()">Apply Nickname</button>
+                        </div>
+                        <div class="form-group">
+                            <label>Login (Once in 7 days)</label>
+                            <input type="text" id="settings-login" placeholder="New Login">
+                            <button class="btn-primary inline-btn" onclick="saveLogin()">Apply Login</button>
+                        </div>
+                        <div class="form-group">
+                            <label>Password & Email (Once in 30 days)</label>
+                            <input type="email" id="settings-email" placeholder="New Email">
+                            <input type="password" id="settings-password" placeholder="New Password">
+                            <button class="btn-primary inline-btn" onclick="saveEmailPass()">Apply Email / Pass</button>
+                        </div>
+                        <div id="profile-save-status"></div>
+                    </div>
+
+                    <div id="settings-tab-audio" class="settings-panel hidden">
+                        <h3>Voice Configuration</h3>
+                        <div class="form-group">
+                            <label>Microphone Input Device</label>
+                            <select id="audio-input-device">
+                                <option>Default Microphone</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Microphone Input Volume</label>
+                            <input type="range" min="0" max="100" value="80" id="mic-volume-range">
+                        </div>
+                        <div class="form-group">
+                            <label>Notification & Ringtone Volume</label>
+                            <input type="range" min="0" max="100" value="70" id="effects-volume-range">
+                        </div>
+                    </div>
+
+                    <div id="settings-tab-appearance" class="settings-panel hidden">
+                        <h3>Client Settings</h3>
+                        <div class="form-group">
+                            <label>Theme</label>
+                            <select id="theme-select" onchange="changeTheme(this.value)">
+                                <option value="dark">Discord Dark</option>
+                                <option value="light">Classic Light</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Interface Language</label>
+                            <select id="lang-select" onchange="changeLanguage(this.value)">
+                                <option value="en">English (Default)</option>
+                                <option value="ru">Русский</option>
+                                <option value="be">Беларуская</option>
+                                <option value="pl">Polski</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-context-menu" class="context-menu hidden">
+        <div class="context-header">Adjust Friend Volume</div>
+        <div class="volume-slider-container">
+            <input type="range" id="peer-volume-slider" min="0" max="200" value="100" class="protruding-slider">
+            <div id="peer-volume-percent" class="volume-percentage">100%</div>
+        </div>
+    </div>
+
+    <audio id="sound-ringtone" loop src="/sounds/ringtone.mp3"></audio>
+    <audio id="sound-notification" src="/sounds/notification.mp3"></audio>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
