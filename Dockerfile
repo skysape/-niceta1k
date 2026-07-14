@@ -1,5 +1,5 @@
 # Используем образ с Java 17
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk-jammy
 
 # Копируем скомпилированный jar-файл из папки target
 COPY target/*.jar app.jar
