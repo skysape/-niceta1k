@@ -15,14 +15,9 @@ public class SecurityConfig {
 @Bean
 public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
-        .csrf(csrf -> csrf.disable()) // Для разработки часто отключают
+        .csrf(csrf -> csrf.disable()) // Отключаем защиту CSRF
         .authorizeHttpRequests((requests) -> requests
-            .requestMatchers("/", "/home", "/register", "/login", "/css/**", "/js/**").permitAll() // РАЗРЕШАЕМ ДОСТУП
-            .anyRequest().authenticated() // Всё остальное — только после логина
-        )
-        .formLogin(form -> form
-            .loginPage("/login")
-            .permitAll()
+            .anyRequest().permitAll() // РАЗРЕШАЕМ ВСЁ ДЛЯ ВСЕХ
         );
     return http.build();
 }
